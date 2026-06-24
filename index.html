@@ -175,7 +175,27 @@
     .vital-head { display: none; }
     .band-label { font-size: 25px; }
   }
+
+  /* ---------- SHARE (band doubles as the share image) + TIKTOK CTA ---------- */
+  .band-card .share-only { display: none; }
+  .band-card.capturing .share-only { display: block; }
+  .band-brand { font-size: 13px; font-weight: 800; opacity: 0.92; margin-bottom: 14px; letter-spacing: 0.3px; }
+  .band-foot { margin-top: 20px; padding-top: 15px; border-top: 1px solid rgba(255,255,255,0.28); }
+  .band-url { font-size: 19px; font-weight: 900; letter-spacing: 0.3px; }
+  .band-handle { font-size: 13px; opacity: 0.92; margin-top: 5px; }
+
+  .share-btn { width: 100%; padding: 15px; border-radius: 10px; border: none; cursor: pointer; font-size: 15px; font-weight: 800; display: flex; align-items: center; justify-content: center; gap: 8px; transition: opacity 0.2s, transform 0.2s; }
+  .share-btn-main { background: linear-gradient(135deg, var(--gold), #f59e0b); color: #3a2c05; box-shadow: 0 8px 24px rgba(252,211,77,0.25); }
+  .share-btn-main:hover { opacity: 0.95; transform: translateY(-1px); }
+  .share-btn:disabled { opacity: 0.6; cursor: default; transform: none; }
+
+  .tiktok-cta { background: linear-gradient(135deg, rgba(45,212,191,0.10), rgba(56,189,248,0.06)); border: 1px solid var(--border); border-radius: var(--radius); padding: 24px 22px; text-align: center; margin-bottom: 16px; }
+  .tiktok-cta .tt-h { font-size: 17px; font-weight: 800; margin-bottom: 5px; }
+  .tiktok-cta .tt-p { font-size: 13.5px; color: var(--text-muted); margin-bottom: 16px; line-height: 1.6; }
+  .tt-btn { display: inline-flex; align-items: center; gap: 8px; background: #000; color: #fff; text-decoration: none; font-weight: 800; font-size: 15px; padding: 13px 26px; border-radius: 99px; border: 1px solid #2a3442; transition: background 0.2s; }
+  .tt-btn:hover { background: #141414; }
 </style>
+<script defer src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
 </head>
 <body>
 <div class="app">
@@ -366,10 +386,18 @@
   <!-- ============ RESULTS ============ -->
   <div class="results" id="results">
     <div class="band-card" id="band-card">
+      <div class="band-brand share-only">🩺 ตรวจสุขภาพการเงิน · by หมอเล่าเงิน</div>
       <div class="band-emoji" id="band-emoji">🩺</div>
       <div class="band-label" id="band-label"></div>
       <div class="band-verdict" id="band-verdict"></div>
+      <div class="band-foot share-only">
+        <div class="band-url">money-health.netlify.app</div>
+        <div class="band-handle">▶ TikTok @thefinancialdoc · เช็กของคุณฟรี</div>
+      </div>
     </div>
+
+    <button class="share-btn share-btn-main" onclick="shareResult(this)">📸 บันทึก &amp; แชร์ผลตรวจ</button>
+    <div style="font-size:12.5px;color:var(--text-muted);text-align:center;margin:9px 0 16px;line-height:1.5">แชร์ลงสตอรี่แล้วแท็ก <b style="color:var(--primary-dark)">@thefinancialdoc</b> — หมออาจหยิบไปรีวิวให้!</div>
 
     <div class="note-box" id="note-box" style="display:none"></div>
 
@@ -405,6 +433,13 @@
     <div class="summary-card">
       <h3>🩺 สรุปผลการตรวจ (Doctor's Note)</h3>
       <p id="summary"></p>
+    </div>
+
+    <!-- ============ TIKTOK CTA ============ -->
+    <div class="tiktok-cta">
+      <div class="tt-h">อยากเข้าใจการเงินมากขึ้น? 📈</div>
+      <div class="tt-p">ดูคลิปสั้นเข้าใจง่ายจากหมอเล่าเงินทุกวัน<br>เริ่มลงทุน ออมเงิน จัดพอร์ต แบบไม่ต้องมีพื้นฐาน</div>
+      <a class="tt-btn" href="https://www.tiktok.com/@thefinancialdoc" target="_blank" rel="noopener">▶ ติดตามบน TikTok</a>
     </div>
 
     <div class="disclaimer">เครื่องมือนี้ให้ข้อมูลเพื่อการศึกษาเท่านั้น ไม่ใช่คำแนะนำการลงทุนเฉพาะบุคคล โปรดปรึกษาผู้เชี่ยวชาญก่อนตัดสินใจทางการเงิน</div>
@@ -783,6 +818,43 @@ function showResults() {
 
   // Summary
   document.getElementById('summary').textContent = buildSummary(m, s, band);
+}
+
+function downloadBlob(blob) {
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url; a.download = 'money-health-result.png';
+  document.body.appendChild(a); a.click(); a.remove();
+  setTimeout(() => URL.revokeObjectURL(url), 4000);
+}
+
+async function shareResult(btn) {
+  const card = document.getElementById('band-card');
+  const orig = btn ? btn.innerHTML : '';
+  if (btn) { btn.disabled = true; btn.innerHTML = '⏳ กำลังสร้างภาพ...'; }
+  try {
+    if (typeof html2canvas === 'undefined') throw new Error('lib-not-loaded');
+    card.classList.add('capturing');
+    const canvas = await html2canvas(card, { scale: 3, backgroundColor: null, useCORS: true, logging: false });
+    card.classList.remove('capturing');
+    const blob = await new Promise(res => canvas.toBlob(res, 'image/png'));
+    const file = new File([blob], 'money-health-result.png', { type: 'image/png' });
+    if (navigator.canShare && navigator.canShare({ files: [file] })) {
+      try {
+        await navigator.share({ files: [file], title: 'ผลตรวจสุขภาพการเงิน',
+          text: 'ผลตรวจสุขภาพการเงินของฉัน 🩺 เช็กของคุณฟรีที่ money-health.netlify.app' });
+      } catch (err) {
+        if (!err || err.name !== 'AbortError') downloadBlob(blob); // ignore user-cancelled
+      }
+    } else {
+      downloadBlob(blob);
+    }
+  } catch (e) {
+    alert('สร้างภาพอัตโนมัติไม่สำเร็จ — กรุณาแคปหน้าจอการ์ดผลตรวจด้านบนเพื่อแชร์ได้เลยครับ');
+  } finally {
+    card.classList.remove('capturing');
+    if (btn) { btn.disabled = false; btn.innerHTML = orig; }
+  }
 }
 
 function startCheckup() {
