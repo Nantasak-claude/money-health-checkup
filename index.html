@@ -1,0 +1,821 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Money Health Check-up | ตรวจสุขภาพการเงิน</title>
+<style>
+  :root {
+    --primary: #2dd4bf;
+    --primary-dark: #5eead4;
+    --primary-light: rgba(45,212,191,0.14);
+    --green: #34d399;
+    --green-bg: rgba(52,211,153,0.13);
+    --blue: #38bdf8;
+    --blue-bg: rgba(56,189,248,0.13);
+    --amber: #fbbf24;
+    --amber-bg: rgba(251,191,36,0.13);
+    --red: #fb7185;
+    --red-bg: rgba(251,113,133,0.13);
+    --gold: #fcd34d;
+    --text: #eef2f7;
+    --text-muted: #94a3b8;
+    --border: #28323f;
+    --bg: #0a0e16;
+    --surface: #141c2b;
+    --white: #141c2b;
+    --radius: 14px;
+    --shadow: 0 10px 34px rgba(0,0,0,0.45);
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: 'Segoe UI', -apple-system, BlinkMacSystemFont, 'Sarabun', sans-serif;
+    background:
+      radial-gradient(1000px 540px at 50% -8%, rgba(45,212,191,0.13), transparent 60%),
+      var(--bg);
+    background-attachment: fixed;
+    color: var(--text); min-height: 100vh; line-height: 1.6;
+    -webkit-font-smoothing: antialiased;
+  }
+  .app { max-width: 700px; margin: 0 auto; padding: 24px 16px 56px; }
+  .hl { color: var(--gold); }
+  .hl-c { color: var(--primary); }
+  .hl-g { color: var(--green); }
+
+  /* Header */
+  .header { text-align: center; margin-bottom: 28px; }
+  .header-badge {
+    display: inline-flex; align-items: center; gap: 8px;
+    background: var(--primary-light); color: var(--primary-dark);
+    padding: 6px 16px; border-radius: 99px; font-size: 13px; font-weight: 600; margin-bottom: 12px;
+  }
+  .header h1 { font-size: 28px; font-weight: 800; margin-bottom: 6px; }
+  .header h1 span { color: var(--primary); text-shadow: 0 0 20px rgba(45,212,191,0.45); }
+  .header p { color: var(--text-muted); font-size: 15px; }
+
+  /* Progress */
+  .progress-wrap { margin-bottom: 24px; }
+  .progress-labels { display: flex; justify-content: space-between; font-size: 13px; color: var(--text-muted); margin-bottom: 8px; }
+  .progress-bar-track { height: 6px; background: var(--border); border-radius: 99px; overflow: hidden; }
+  .progress-bar-fill { height: 100%; background: linear-gradient(90deg, var(--primary), var(--primary-dark)); border-radius: 99px; transition: width 0.4s ease; }
+
+  /* Card */
+  .card { background: var(--white); border: 1px solid var(--border); border-radius: var(--radius); box-shadow: var(--shadow); padding: 32px; margin-bottom: 16px; }
+  .section-header { display: flex; align-items: center; gap: 12px; margin-bottom: 24px; padding-bottom: 16px; border-bottom: 2px solid var(--primary-light); }
+  .section-icon { width: 46px; height: 46px; border-radius: 11px; background: var(--primary-light); color: var(--primary); display: flex; align-items: center; justify-content: center; font-size: 23px; flex-shrink: 0; }
+  .section-title { font-size: 18px; font-weight: 700; }
+  .section-subtitle { font-size: 13px; color: var(--text-muted); }
+
+  /* Fields */
+  .field { margin-bottom: 20px; }
+  .field label { display: block; font-size: 14px; font-weight: 600; margin-bottom: 8px; }
+  .field input, .field select {
+    width: 100%; padding: 12px 14px; border: 2px solid var(--border); border-radius: 9px;
+    font-size: 15px; color: var(--text); background: var(--white); transition: border-color 0.2s; -webkit-appearance: none;
+  }
+  .field input:focus, .field select:focus { outline: none; border-color: var(--primary); box-shadow: 0 0 0 3px rgba(45,212,191,0.16); }
+  .field input::placeholder { color: #5b6776; }
+  .field select option { background: var(--surface); color: var(--text); }
+  .field .hint { font-size: 12px; color: var(--text-muted); margin-top: 5px; }
+
+  .options-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+  .options-grid.cols-1 { grid-template-columns: 1fr; }
+  .options-grid.cols-4 { grid-template-columns: 1fr 1fr 1fr 1fr; }
+  .option-card { border: 2px solid var(--border); border-radius: 9px; padding: 12px 14px; cursor: pointer; transition: all 0.18s; user-select: none; }
+  .option-card:hover { border-color: var(--primary); background: var(--primary-light); }
+  .option-card.selected { border-color: var(--primary); background: var(--primary-light); box-shadow: 0 0 0 1px var(--primary) inset, 0 6px 18px rgba(45,212,191,0.14); }
+  .option-card input[type="radio"] { display: none; }
+  .option-label { font-size: 14px; font-weight: 600; }
+  .option-sub { font-size: 12px; color: var(--text-muted); margin-top: 2px; }
+
+  /* Nav */
+  .nav { display: flex; gap: 12px; margin-top: 8px; }
+  .btn { padding: 14px 28px; border-radius: 9px; font-size: 15px; font-weight: 700; cursor: pointer; border: none; transition: all 0.2s; flex: 1; }
+  .btn-primary { background: linear-gradient(135deg, var(--primary), #22d3ee); color: #042b27; box-shadow: 0 8px 24px rgba(45,212,191,0.28); }
+  .btn-primary:hover { opacity: 0.95; transform: translateY(-1px); }
+  .btn-secondary { background: #1b2433; color: var(--text); border: 1px solid var(--border); }
+  .btn-secondary:hover { background: #243042; }
+  .err-msg { color: var(--red); font-size: 13px; margin-top: 10px; text-align: center; min-height: 18px; }
+
+  /* ---------- RESULTS ---------- */
+  .results { display: none; }
+
+  .band-card { border-radius: var(--radius); padding: 36px 28px; text-align: center; margin-bottom: 18px; box-shadow: var(--shadow); color: white; }
+  .band-emoji { font-size: 52px; line-height: 1; margin-bottom: 10px; }
+  .band-label { font-size: 30px; font-weight: 900; margin-bottom: 12px; }
+  .band-verdict { font-size: 15px; opacity: 0.95; max-width: 440px; margin: 0 auto; line-height: 1.7; }
+
+  .panel { background: var(--white); border: 1px solid var(--border); border-radius: var(--radius); box-shadow: var(--shadow); padding: 24px; margin-bottom: 16px; }
+  .panel h3 { font-size: 16px; font-weight: 800; margin-bottom: 6px; display: flex; align-items: center; gap: 8px; }
+  .panel .panel-sub { font-size: 12px; color: var(--text-muted); margin-bottom: 16px; }
+
+  /* Vital signs */
+  .vital { display: grid; grid-template-columns: 1.4fr 1fr 1fr auto; align-items: center; gap: 8px; padding: 12px 0; border-bottom: 1px solid var(--border); }
+  .vital:last-child { border-bottom: none; }
+  .vital-name { font-size: 14px; font-weight: 600; }
+  .vital-val { font-size: 14px; font-weight: 700; }
+  .vital-ref { font-size: 12px; color: var(--text-muted); }
+  .vital-flag { display: inline-flex; align-items: center; gap: 5px; font-size: 12px; font-weight: 700; padding: 4px 10px; border-radius: 99px; white-space: nowrap; }
+  .flag-green { background: var(--green-bg); color: var(--green); }
+  .flag-amber { background: var(--amber-bg); color: var(--amber); }
+  .flag-red { background: var(--red-bg); color: var(--red); }
+  .vital-head { display: grid; grid-template-columns: 1.4fr 1fr 1fr auto; gap: 8px; font-size: 11px; color: var(--text-muted); font-weight: 600; padding-bottom: 8px; border-bottom: 2px solid var(--border); margin-bottom: 4px; text-transform: uppercase; letter-spacing: 0.5px; }
+
+  /* Lists */
+  .rlist { list-style: none; }
+  .rlist li { padding: 11px 14px; border-radius: 9px; margin-bottom: 8px; font-size: 14px; display: flex; align-items: flex-start; gap: 10px; line-height: 1.55; }
+  .rlist li:last-child { margin-bottom: 0; }
+  .rlist li.good { background: var(--green-bg); color: #6ee7b7; border: 1px solid rgba(52,211,153,0.22); }
+  .rlist li.warn { background: var(--amber-bg); color: #fcd34d; border: 1px solid rgba(251,191,36,0.22); }
+  .rlist .ic { flex-shrink: 0; margin-top: 1px; }
+
+  /* Prescriptions */
+  .rx { border: 2px solid var(--primary-light); border-radius: 11px; padding: 16px 18px; margin-bottom: 12px; }
+  .rx:last-child { margin-bottom: 0; }
+  .rx-title { font-size: 15px; font-weight: 800; color: var(--primary-dark); display: flex; gap: 8px; margin-bottom: 6px; }
+  .rx-num { background: var(--primary); color: white; width: 24px; height: 24px; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; font-size: 13px; flex-shrink: 0; }
+  .rx-body { font-size: 14px; color: var(--text); margin-left: 32px; line-height: 1.6; }
+  .rx-tip { font-size: 13px; color: var(--primary-dark); background: var(--primary-light); border-radius: 8px; padding: 8px 11px; margin-top: 8px; margin-left: 32px; }
+
+  /* Advisory */
+  .adv { display: flex; gap: 11px; padding: 13px 0; border-bottom: 1px solid var(--border); font-size: 14px; line-height: 1.6; }
+  .adv:last-child { border-bottom: none; }
+  .adv .ic { flex-shrink: 0; font-size: 18px; margin-top: 1px; }
+
+  /* Summary */
+  .summary-card { background: linear-gradient(135deg, rgba(45,212,191,0.10), rgba(56,189,248,0.07)); border: 1px solid var(--border); border-left: 4px solid var(--primary); border-radius: var(--radius); padding: 24px; margin-bottom: 16px; }
+  .summary-card h3 { font-size: 16px; font-weight: 800; margin-bottom: 12px; color: var(--primary-dark); display: flex; align-items: center; gap: 8px; }
+  .summary-card p { font-size: 15px; line-height: 1.85; }
+
+  .note-box { background: var(--amber-bg); border: 1px solid rgba(251,191,36,0.3); color: #fcd34d; border-radius: 9px; padding: 12px 14px; font-size: 13px; margin-bottom: 16px; }
+
+  .disclaimer { font-size: 11px; color: var(--text-muted); text-align: center; margin: 18px 6px; line-height: 1.6; }
+
+  /* Intro / welcome screen */
+  .intro-lead h2 { font-size: 22px; font-weight: 800; margin-bottom: 10px; line-height: 1.4; }
+  .intro-lead p { color: var(--text-muted); font-size: 15px; margin-bottom: 22px; line-height: 1.7; }
+  .intro-list { display: flex; flex-direction: column; gap: 14px; margin-bottom: 22px; }
+  .intro-item { display: flex; gap: 13px; align-items: flex-start; }
+  .intro-item > span { font-size: 24px; flex-shrink: 0; line-height: 1.3; }
+  .intro-item b { font-size: 15px; display: block; }
+  .intro-item .sub { font-size: 13px; color: var(--text-muted); }
+  .intro-meta { display: flex; gap: 9px; justify-content: center; flex-wrap: wrap; margin-bottom: 18px; }
+  .intro-meta span { background: var(--primary-light); color: var(--primary-dark); padding: 6px 14px; border-radius: 99px; font-size: 13px; font-weight: 600; }
+  .privacy-box { background: var(--green-bg); border: 1px solid rgba(52,211,153,0.3); color: #8ff0c4; border-radius: 10px; padding: 13px 15px; font-size: 13px; line-height: 1.65; margin-bottom: 22px; }
+
+  .restart-btn { display: block; width: 100%; padding: 16px; border-radius: 9px; background: var(--border); color: var(--text); font-size: 15px; font-weight: 700; cursor: pointer; border: none; margin-top: 4px; transition: background 0.2s; }
+  .restart-btn:hover { background: #243042; }
+
+  @media (max-width: 520px) {
+    .card { padding: 22px 18px; }
+    .options-grid, .options-grid.cols-4 { grid-template-columns: 1fr 1fr; }
+    .vital { grid-template-columns: 1fr auto; grid-template-areas: "name flag" "val ref"; row-gap: 2px; }
+    .vital-name { grid-area: name; } .vital-flag { grid-area: flag; justify-self: end; }
+    .vital-val { grid-area: val; } .vital-ref { grid-area: ref; justify-self: start; }
+    .vital-head { display: none; }
+    .band-label { font-size: 25px; }
+  }
+</style>
+</head>
+<body>
+<div class="app">
+
+  <div class="header">
+    <div class="header-badge">🩺 by หมอเล่าเงิน · The Financial Doc</div>
+    <h1>Money <span>Health</span> Check-up</h1>
+    <p>ตรวจสุขภาพการเงินของคุณ รับผลการตรวจแบบละเอียดทันที</p>
+  </div>
+
+  <!-- ============ INTRO ============ -->
+  <div id="intro">
+    <div class="card">
+      <div class="intro-lead">
+        <h2>ตรวจสุขภาพการเงินของคุณ ใน <span class="hl">3 นาที</span> 🩺</h2>
+        <p>แบบประเมินสุขภาพการเงินที่ออกแบบโดยแพทย์ ใช้กรอบเดียวกับการตรวจสุขภาพร่างกาย — ตอบคำถามสั้นๆ แล้วรับ "ผลตรวจ" และคำแนะนำเฉพาะตัวคุณทันที</p>
+      </div>
+      <div class="intro-list">
+        <div class="intro-item"><span>🩺</span><div><b>ผลตรวจสุขภาพการเงิน</b><div class="sub">ระดับสุขภาพการเงินของคุณ พร้อมคำอธิบายที่เข้าใจง่าย</div></div></div>
+        <div class="intro-item"><span>📊</span><div><b>สัญญาณการเงิน (Vital Signs)</b><div class="sub">เทียบค่าของคุณกับค่ามาตรฐาน เหมือนผลตรวจเลือด</div></div></div>
+        <div class="intro-item"><span>💊</span><div><b>คำแนะนำเฉพาะคุณ</b><div class="sub">3 สิ่งสำคัญที่ควรทำ คำนวณจากตัวเลขจริงของคุณ</div></div></div>
+      </div>
+      <div class="intro-meta"><span>📝 ~24 คำถาม</span><span>⏱️ ~3 นาที</span><span>💸 ฟรี</span></div>
+      <div class="privacy-box">🔒 <b>ข้อมูลของคุณเป็นความลับ</b> — ทุกคำตอบประมวลผลในเครื่องของคุณเท่านั้น ไม่มีการเก็บหรือส่งข้อมูลไปที่ใด เมื่อปิดหน้านี้ ข้อมูลทั้งหมดจะหายไปทันที</div>
+      <button class="btn btn-primary" style="width:100%" onclick="startCheckup()">เริ่มตรวจเลย →</button>
+      <div class="disclaimer" style="margin-bottom:0">เพื่อการศึกษาเท่านั้น ไม่ใช่คำแนะนำการลงทุนเฉพาะบุคคล</div>
+    </div>
+  </div>
+
+  <!-- ============ FORM ============ -->
+  <div id="form-area" style="display:none">
+    <div class="progress-wrap">
+      <div class="progress-labels"><span id="step-label">ขั้นตอนที่ 1 จาก 8</span><span id="step-pct">13%</span></div>
+      <div class="progress-bar-track"><div class="progress-bar-fill" id="progress-fill" style="width:13%"></div></div>
+    </div>
+
+    <!-- STEP 1 -->
+    <div class="card step" id="step-1">
+      <div class="section-header"><div class="section-icon">👤</div><div><div class="section-title">ข้อมูลส่วนตัว</div><div class="section-subtitle">ข้อมูลพื้นฐานเพื่อการประเมินที่แม่นยำ</div></div></div>
+      <div class="field"><label>อายุ (ปี)</label><input type="number" id="f-age" min="18" max="80" placeholder="เช่น 35"></div>
+      <div class="field"><label>อาชีพ</label>
+        <select id="f-occupation">
+          <option value="">-- เลือกอาชีพ --</option>
+          <option value="doctor">แพทย์ / ทันตแพทย์</option>
+          <option value="nurse">พยาบาล / บุคลากรสาธารณสุข</option>
+          <option value="govt">ข้าราชการ / รัฐวิสาหกิจ</option>
+          <option value="private">พนักงานเอกชน</option>
+          <option value="business">ธุรกิจส่วนตัว</option>
+          <option value="freelance">ฟรีแลนซ์ / อาชีพอิสระ</option>
+          <option value="other">อื่นๆ</option>
+        </select>
+      </div>
+      <div class="field"><label>สถานะครอบครัว</label>
+        <div class="options-grid cols-1">
+          <label class="option-card" onclick="pick(this,'f-marital','single')"><input type="radio" name="f-marital"><div class="option-label">โสด</div></label>
+          <label class="option-card" onclick="pick(this,'f-marital','married')"><input type="radio" name="f-marital"><div class="option-label">สมรส</div></label>
+          <label class="option-card" onclick="pick(this,'f-marital','divorced')"><input type="radio" name="f-marital"><div class="option-label">หย่า / หม้าย</div></label>
+        </div>
+      </div>
+      <div class="field"><label>จำนวนคนที่ต้องดูแล (บุตร / พ่อแม่ / อื่นๆ)</label>
+        <div class="options-grid cols-4">
+          <label class="option-card" onclick="pick(this,'f-dependents','0')"><input type="radio" name="f-dependents"><div class="option-label">0</div></label>
+          <label class="option-card" onclick="pick(this,'f-dependents','1')"><input type="radio" name="f-dependents"><div class="option-label">1</div></label>
+          <label class="option-card" onclick="pick(this,'f-dependents','2')"><input type="radio" name="f-dependents"><div class="option-label">2</div></label>
+          <label class="option-card" onclick="pick(this,'f-dependents','3')"><input type="radio" name="f-dependents"><div class="option-label">3+</div></label>
+        </div>
+      </div>
+      <div class="field"><label>รายได้รวมต่อเดือน — หลังหักภาษี (บาท)</label><input type="number" id="f-income" min="0" placeholder="เช่น 120000"><div class="hint">เงินที่ได้รับจริง รวมทุกแหล่งรายได้</div></div>
+    </div>
+
+    <!-- STEP 2 -->
+    <div class="card step" id="step-2" style="display:none">
+      <div class="section-header"><div class="section-icon">💼</div><div><div class="section-title">ความมั่นคงของรายได้</div><div class="section-subtitle">เสถียรภาพและความหลากหลายของรายได้</div></div></div>
+      <div class="field"><label>จำนวนแหล่งรายได้ที่มีอยู่</label>
+        <div class="options-grid">
+          <label class="option-card" onclick="pick(this,'f-sources','1')"><input type="radio" name="f-sources"><div class="option-label">1 แหล่ง</div><div class="option-sub">เงินเดือนอย่างเดียว</div></label>
+          <label class="option-card" onclick="pick(this,'f-sources','2')"><input type="radio" name="f-sources"><div class="option-label">2 แหล่ง</div><div class="option-sub">เงินเดือน + รายได้เสริม</div></label>
+          <label class="option-card" onclick="pick(this,'f-sources','3')"><input type="radio" name="f-sources"><div class="option-label">3 แหล่ง</div><div class="option-sub">หลายทาง</div></label>
+          <label class="option-card" onclick="pick(this,'f-sources','4')"><input type="radio" name="f-sources"><div class="option-label">4+ แหล่ง</div><div class="option-sub">กระจายรายได้ดีมาก</div></label>
+        </div>
+      </div>
+      <div class="field"><label>ความมั่นคงของรายได้หลัก</label>
+        <div class="options-grid">
+          <label class="option-card" onclick="pick(this,'f-stability','high')"><input type="radio" name="f-stability"><div class="option-label">มั่นคงสูง</div><div class="option-sub">ราชการ / สัญญาระยะยาว</div></label>
+          <label class="option-card" onclick="pick(this,'f-stability','medium')"><input type="radio" name="f-stability"><div class="option-label">ปานกลาง</div><div class="option-sub">พนักงานประจำเอกชน</div></label>
+          <label class="option-card" onclick="pick(this,'f-stability','low')"><input type="radio" name="f-stability"><div class="option-label">ไม่แน่นอน</div><div class="option-sub">ฟรีแลนซ์ / คอมมิชชั่น</div></label>
+          <label class="option-card" onclick="pick(this,'f-stability','variable')"><input type="radio" name="f-stability"><div class="option-label">ผันผวน</div><div class="option-sub">ธุรกิจ / ตามฤดูกาล</div></label>
+        </div>
+      </div>
+    </div>
+
+    <!-- STEP 3 -->
+    <div class="card step" id="step-3" style="display:none">
+      <div class="section-header"><div class="section-icon">💰</div><div><div class="section-title">กระแสเงินสด</div><div class="section-subtitle">รายจ่าย เงินออม และการลงทุนต่อเดือน</div></div></div>
+      <div class="field"><label>รายจ่ายรวมต่อเดือน (บาท)</label><input type="number" id="f-expenses" min="0" placeholder="เช่น 73000"><div class="hint">รวมค่าใช้จ่ายทั้งหมดและยอดผ่อนหนี้ ยกเว้นเงินออมและการลงทุน</div></div>
+      <div class="field"><label>เงินออมต่อเดือน (บาท)</label><input type="number" id="f-savings" min="0" placeholder="เช่น 15000"><div class="hint">เงินที่เก็บเข้าบัญชีออมทรัพย์ (ไม่รวมเงินลงทุน)</div></div>
+    </div>
+
+    <!-- STEP 4 -->
+    <div class="card step" id="step-4" style="display:none">
+      <div class="section-header"><div class="section-icon">🏦</div><div><div class="section-title">สินทรัพย์</div><div class="section-subtitle">เงินสำรองและเงินลงทุนที่สะสมไว้</div></div></div>
+      <div class="field"><label>เงินสด / เงินฝากสภาพคล่อง (บาท)</label><input type="number" id="f-liquid" min="0" placeholder="เช่น 150000"><div class="hint">เงินที่ถอนใช้ได้ทันที — บัญชีออมทรัพย์ เงินฝากระยะสั้น</div></div>
+      <div class="field"><label>เงินลงทุนรวมทั้งหมด (บาท)</label><input type="number" id="f-invest-total" min="0" placeholder="เช่น 900000"><div class="hint">หุ้น กองทุน คริปโต ทอง รวมกบข./กองทุนสำรองเลี้ยงชีพ</div></div>
+    </div>
+
+    <!-- STEP 5 -->
+    <div class="card step" id="step-5" style="display:none">
+      <div class="section-header"><div class="section-icon">📋</div><div><div class="section-title">ภาระหนี้สิน</div><div class="section-subtitle">หนี้ทั้งหมดที่มีอยู่ในปัจจุบัน</div></div></div>
+      <div class="field"><label>ยอดหนี้บัตรเครดิตคงค้าง (บาท)</label><input type="number" id="f-debt-card" min="0" placeholder="0 ถ้าจ่ายเต็มทุกเดือน"><div class="hint">ยอดที่ยังไม่ได้ชำระเต็ม</div></div>
+      <div class="field"><label>สินเชื่อส่วนบุคคล / เงินกู้ (บาท)</label><input type="number" id="f-debt-personal" min="0" placeholder="0 ถ้าไม่มี"></div>
+      <div class="field"><label>สินเชื่อบ้าน (บาท)</label><input type="number" id="f-debt-home" min="0" placeholder="0 ถ้าไม่มี"></div>
+      <div class="field"><label>หนี้อื่นๆ (รถ / การศึกษา / อื่นๆ) (บาท)</label><input type="number" id="f-debt-other" min="0" placeholder="0 ถ้าไม่มี"></div>
+      <div class="field"><label>ยอดผ่อนชำระหนี้รวมต่อเดือน (บาท)</label><input type="number" id="f-debt-payment" min="0" placeholder="เช่น 28000"><div class="hint">รวมทุกอย่าง — บัตร สินเชื่อ ผ่อนบ้าน ผ่อนรถ</div></div>
+    </div>
+
+    <!-- STEP 6 -->
+    <div class="card step" id="step-6" style="display:none">
+      <div class="section-header"><div class="section-icon">📈</div><div><div class="section-title">การลงทุน</div><div class="section-subtitle">พฤติกรรมและสัดส่วนการลงทุน</div></div></div>
+      <div class="field"><label>ลงทุนต่อเดือน (บาท)</label><input type="number" id="f-invest-monthly" min="0" placeholder="0 ถ้ายังไม่ได้เริ่ม"><div class="hint">เงินที่นำไปลงทุนสม่ำเสมอทุกเดือน</div></div>
+      <div class="field"><label>สัดส่วนความเสี่ยงหลักของพอร์ต</label>
+        <div class="options-grid cols-1">
+          <label class="option-card" onclick="pick(this,'f-invest-type','none')"><input type="radio" name="f-invest-type"><div class="option-label">ยังไม่มีการลงทุน</div></label>
+          <label class="option-card" onclick="pick(this,'f-invest-type','safe')"><input type="radio" name="f-invest-type"><div class="option-label">ความเสี่ยงต่ำ</div><div class="option-sub">เงินฝาก พันธบัตร กองทุนตราสารหนี้</div></label>
+          <label class="option-card" onclick="pick(this,'f-invest-type','balanced')"><input type="radio" name="f-invest-type"><div class="option-label">สมดุล</div><div class="option-sub">กองทุนผสม RMF/SSF หุ้นกู้</div></label>
+          <label class="option-card" onclick="pick(this,'f-invest-type','growth')"><input type="radio" name="f-invest-type"><div class="option-label">เน้นเติบโต</div><div class="option-sub">หุ้น กองทุนหุ้น คริปโต</div></label>
+        </div>
+      </div>
+      <div class="field"><label>คุณลงทุนสม่ำเสมอแค่ไหน?</label>
+        <div class="options-grid cols-1">
+          <label class="option-card" onclick="pick(this,'f-consistency','auto')"><input type="radio" name="f-consistency"><div class="option-label">ลงทุนอัตโนมัติทุกเดือน (DCA)</div><div class="option-sub">มีวินัยสูง</div></label>
+          <label class="option-card" onclick="pick(this,'f-consistency','spare')"><input type="radio" name="f-consistency"><div class="option-label">ลงทุนเมื่อมีเงินเหลือ</div><div class="option-sub">สม่ำเสมอบ้าง</div></label>
+          <label class="option-card" onclick="pick(this,'f-consistency','occasional')"><input type="radio" name="f-consistency"><div class="option-label">ลงทุนเป็นครั้งคราว</div><div class="option-sub">ไม่แน่นอน</div></label>
+          <label class="option-card" onclick="pick(this,'f-consistency','none')"><input type="radio" name="f-consistency"><div class="option-label">ยังไม่ได้เริ่ม</div></label>
+        </div>
+      </div>
+    </div>
+
+    <!-- STEP 7 -->
+    <div class="card step" id="step-7" style="display:none">
+      <div class="section-header"><div class="section-icon">🔒</div><div><div class="section-title">การคุ้มครอง / ประกัน</div><div class="section-subtitle">ความพร้อมรับมือเหตุไม่คาดฝัน</div></div></div>
+      <div class="field"><label>ประกันสุขภาพ</label>
+        <div class="options-grid">
+          <label class="option-card" onclick="pick(this,'f-health','none')"><input type="radio" name="f-health"><div class="option-label">ไม่มีเลย</div></label>
+          <label class="option-card" onclick="pick(this,'f-health','basic')"><input type="radio" name="f-health"><div class="option-label">สิทธิ์พื้นฐาน</div><div class="option-sub">ราชการ / ประกันสังคม / บัตรทอง</div></label>
+          <label class="option-card" onclick="pick(this,'f-health','private')"><input type="radio" name="f-health"><div class="option-label">ประกันเอกชน</div><div class="option-sub">ซื้อเพิ่มเอง</div></label>
+          <label class="option-card" onclick="pick(this,'f-health','both')"><input type="radio" name="f-health"><div class="option-label">มีทั้งคู่</div><div class="option-sub">พื้นฐาน + เอกชน</div></label>
+        </div>
+      </div>
+      <div class="field"><label>ประกันชีวิต</label>
+        <div class="options-grid">
+          <label class="option-card" onclick="pick(this,'f-life','none')"><input type="radio" name="f-life"><div class="option-label">ไม่มี</div></label>
+          <label class="option-card" onclick="pick(this,'f-life','basic')"><input type="radio" name="f-life"><div class="option-label">ทุนคุ้มครองน้อย</div><div class="option-sub">น้อยกว่า 5 เท่าของรายได้ปี</div></label>
+          <label class="option-card" onclick="pick(this,'f-life','adequate')"><input type="radio" name="f-life"><div class="option-label">เพียงพอ</div><div class="option-sub">5–10 เท่าของรายได้ปี</div></label>
+          <label class="option-card" onclick="pick(this,'f-life','full')"><input type="radio" name="f-life"><div class="option-label">ครอบคลุมดี</div><div class="option-sub">มากกว่า 10 เท่า</div></label>
+        </div>
+      </div>
+    </div>
+
+    <!-- STEP 8 -->
+    <div class="card step" id="step-8" style="display:none">
+      <div class="section-header"><div class="section-icon">🎯</div><div><div class="section-title">เป้าหมายทางการเงิน</div><div class="section-subtitle">วางแผนอนาคตที่มั่นคง</div></div></div>
+      <div class="field"><label>อายุที่ต้องการเกษียณ (ปี)</label><input type="number" id="f-retire-age" min="40" max="80" placeholder="เช่น 60"></div>
+      <div class="field"><label>คาดว่าจะใช้จ่ายต่อเดือนหลังเกษียณ ประมาณเท่าไร? (บาท)</label><input type="number" id="f-retire-spend" min="0" placeholder="เช่น 50000"><div class="hint">ลองนึกถึงค่าใช้จ่ายในวันที่ไม่ต้องทำงานแล้ว โดยทั่วไปมักลดลงจากปัจจุบัน (ผ่อนบ้านหมด ไม่มีค่าเลี้ยงดูบุตร ไม่มีค่าเดินทางทำงาน)</div></div>
+      <div class="field"><label>แผนเกษียณของคุณชัดเจนแค่ไหน?</label>
+        <div class="options-grid">
+          <label class="option-card" onclick="pick(this,'f-retire-plan','none')"><input type="radio" name="f-retire-plan"><div class="option-label">ยังไม่ได้คิด</div></label>
+          <label class="option-card" onclick="pick(this,'f-retire-plan','vague')"><input type="radio" name="f-retire-plan"><div class="option-label">มีแนวคิดบ้าง</div></label>
+          <label class="option-card" onclick="pick(this,'f-retire-plan','clear')"><input type="radio" name="f-retire-plan"><div class="option-label">มีแผนชัดเจน</div></label>
+          <label class="option-card" onclick="pick(this,'f-retire-plan','active')"><input type="radio" name="f-retire-plan"><div class="option-label">กำลังลงมือทำ</div></label>
+        </div>
+      </div>
+      <div class="field"><label>มีค่าใช้จ่ายก้อนใหญ่ที่วางแผนใน 3–5 ปีข้างหน้าหรือไม่?</label>
+        <div class="options-grid cols-1">
+          <label class="option-card" onclick="pick(this,'f-big','none')"><input type="radio" name="f-big"><div class="option-label">ไม่มี</div></label>
+          <label class="option-card" onclick="pick(this,'f-big','prepared')"><input type="radio" name="f-big"><div class="option-label">มี และเตรียมเงินไว้แล้ว</div></label>
+          <label class="option-card" onclick="pick(this,'f-big','unprepared')"><input type="radio" name="f-big"><div class="option-label">มี แต่ยังไม่ได้เตรียม</div><div class="option-sub">เช่น ดาวน์บ้าน รถ แต่งงาน การศึกษาบุตร</div></label>
+        </div>
+      </div>
+    </div>
+
+    <div class="err-msg" id="err"></div>
+    <div class="nav">
+      <button class="btn btn-secondary" id="btn-back" onclick="goBack()" style="display:none">← ย้อนกลับ</button>
+      <button class="btn btn-primary" id="btn-next" onclick="goNext()">ถัดไป →</button>
+    </div>
+  </div>
+
+  <!-- ============ RESULTS ============ -->
+  <div class="results" id="results">
+    <div class="band-card" id="band-card">
+      <div class="band-emoji" id="band-emoji">🩺</div>
+      <div class="band-label" id="band-label"></div>
+      <div class="band-verdict" id="band-verdict"></div>
+    </div>
+
+    <div class="note-box" id="note-box" style="display:none"></div>
+
+    <div class="panel">
+      <h3>🩺 ผลตรวจสัญญาณการเงิน (Vital Signs)</h3>
+      <div class="panel-sub">เทียบค่าของคุณกับค่าอ้างอิงมาตรฐาน เหมือนผลตรวจสุขภาพ</div>
+      <div class="vital-head"><span>ตัวชี้วัด</span><span>ค่าของคุณ</span><span>ค่าอ้างอิง</span><span>สถานะ</span></div>
+      <div id="vitals"></div>
+    </div>
+
+    <div class="panel">
+      <h3>💪 จุดแข็งทางการเงิน</h3>
+      <ul class="rlist" id="strengths"></ul>
+    </div>
+
+    <div class="panel">
+      <h3>⚠️ จุดที่ต้องดูแล</h3>
+      <ul class="rlist" id="risks"></ul>
+    </div>
+
+    <div class="panel">
+      <h3>💊 ใบสั่งแพทย์ทางการเงิน</h3>
+      <div class="panel-sub">3 สิ่งสำคัญที่ควรทำก่อน คำนวณจากตัวเลขจริงของคุณ</div>
+      <div id="prescriptions"></div>
+    </div>
+
+    <div class="panel">
+      <h3>📌 คำแนะนำเพิ่มเติม</h3>
+      <div class="panel-sub">การคุ้มครองและการเตรียมเกษียณ (ไม่นำมาคิดคะแนน)</div>
+      <div id="advisory"></div>
+    </div>
+
+    <div class="summary-card">
+      <h3>🩺 สรุปผลการตรวจ (Doctor's Note)</h3>
+      <p id="summary"></p>
+    </div>
+
+    <div class="disclaimer">เครื่องมือนี้ให้ข้อมูลเพื่อการศึกษาเท่านั้น ไม่ใช่คำแนะนำการลงทุนเฉพาะบุคคล โปรดปรึกษาผู้เชี่ยวชาญก่อนตัดสินใจทางการเงิน</div>
+
+    <button class="restart-btn" onclick="restart()">🔄 ทำแบบทดสอบใหม่</button>
+  </div>
+
+</div>
+
+<script>
+let currentStep = 1;
+const totalSteps = 8;
+
+function pick(el, name, value) {
+  document.querySelectorAll(`[name="${name}"]`).forEach(r => r.closest('.option-card').classList.remove('selected'));
+  el.classList.add('selected');
+  el.dataset.val = value;
+  el.closest('.field').dataset.value = value;
+  // store on a hidden tracker
+  picks[name] = value;
+}
+const picks = {};
+
+function updateProgress() {
+  const pct = Math.round((currentStep / totalSteps) * 100);
+  document.getElementById('progress-fill').style.width = pct + '%';
+  document.getElementById('step-label').textContent = `ขั้นตอนที่ ${currentStep} จาก ${totalSteps}`;
+  document.getElementById('step-pct').textContent = pct + '%';
+  document.getElementById('btn-back').style.display = currentStep > 1 ? 'block' : 'none';
+  document.getElementById('btn-next').textContent = currentStep === totalSteps ? 'ดูผลการตรวจ 🩺' : 'ถัดไป →';
+}
+
+function showErr(msg) { document.getElementById('err').textContent = msg || ''; }
+
+function num(id) { const v = document.getElementById(id).value.replace(/,/g, '').trim(); return v === '' ? null : parseFloat(v); }
+function getN(id) { return parseFloat(document.getElementById(id).value.replace(/,/g, '')) || 0; }
+
+function validateStep(s) {
+  showErr('');
+  const need = (cond, msg) => { if (!cond) { showErr(msg); return false; } return true; };
+  if (s === 1) {
+    if (num('f-age') === null || num('f-age') < 18) return need(false, 'กรุณากรอกอายุ (18 ปีขึ้นไป)');
+    if (!document.getElementById('f-occupation').value) return need(false, 'กรุณาเลือกอาชีพ');
+    if (!picks['f-marital']) return need(false, 'กรุณาเลือกสถานะครอบครัว');
+    if (!picks['f-dependents']) return need(false, 'กรุณาเลือกจำนวนคนที่ต้องดูแล');
+    if (num('f-income') === null || num('f-income') <= 0) return need(false, 'กรุณากรอกรายได้ต่อเดือน');
+  }
+  if (s === 2) { if (!picks['f-sources']) return need(false,'กรุณาเลือกจำนวนแหล่งรายได้'); if (!picks['f-stability']) return need(false,'กรุณาเลือกความมั่นคงของรายได้'); }
+  if (s === 3) { if (num('f-expenses')===null) return need(false,'กรุณากรอกรายจ่ายต่อเดือน'); if (num('f-savings')===null) return need(false,'กรุณากรอกเงินออมต่อเดือน'); }
+  if (s === 4) { if (num('f-liquid')===null) return need(false,'กรุณากรอกเงินสภาพคล่อง'); if (num('f-invest-total')===null) return need(false,'กรุณากรอกเงินลงทุนรวม'); }
+  if (s === 5) { if (num('f-debt-payment')===null) return need(false,'กรุณากรอกยอดผ่อนชำระรวมต่อเดือน (0 ถ้าไม่มี)'); }
+  if (s === 6) { if (num('f-invest-monthly')===null) return need(false,'กรุณากรอกเงินลงทุนต่อเดือน (0 ถ้าไม่มี)'); if (!picks['f-invest-type']) return need(false,'กรุณาเลือกสัดส่วนการลงทุน'); if (!picks['f-consistency']) return need(false,'กรุณาเลือกความสม่ำเสมอ'); }
+  if (s === 7) { if (!picks['f-health']) return need(false,'กรุณาเลือกประกันสุขภาพ'); if (!picks['f-life']) return need(false,'กรุณาเลือกประกันชีวิต'); }
+  if (s === 8) { if (num('f-retire-age')===null) return need(false,'กรุณากรอกอายุที่ต้องการเกษียณ'); if (num('f-retire-spend')===null) return need(false,'กรุณากรอกค่าใช้จ่ายหลังเกษียณโดยประมาณ'); if (!picks['f-retire-plan']) return need(false,'กรุณาเลือกความชัดเจนของแผนเกษียณ'); if (!picks['f-big']) return need(false,'กรุณาเลือกค่าใช้จ่ายก้อนใหญ่'); }
+  return true;
+}
+
+function goNext() {
+  if (!validateStep(currentStep)) return;
+  if (currentStep === totalSteps) { showResults(); return; }
+  document.getElementById('step-'+currentStep).style.display='none';
+  currentStep++;
+  document.getElementById('step-'+currentStep).style.display='block';
+  updateProgress(); showErr(''); window.scrollTo(0,0);
+}
+function goBack() {
+  document.getElementById('step-'+currentStep).style.display='none';
+  currentStep--;
+  document.getElementById('step-'+currentStep).style.display='block';
+  updateProgress(); showErr(''); window.scrollTo(0,0);
+}
+
+/* ---------- ENGINE ---------- */
+const baht = n => '฿' + Math.round(n).toLocaleString('en-US');
+const pctTxt = x => Math.round(x*100) + '%';
+
+function computeMetrics() {
+  const income = getN('f-income');
+  const annual = income * 12;
+  const expenses = getN('f-expenses');
+  const savings = getN('f-savings');
+  const investMonthly = getN('f-invest-monthly');
+  const liquid = getN('f-liquid');
+  const investTotal = getN('f-invest-total');
+  const card = getN('f-debt-card'), personal = getN('f-debt-personal'), home = getN('f-debt-home'), other = getN('f-debt-other');
+  const totalDebt = card + personal + home + other;
+  const debtPayment = getN('f-debt-payment');
+  const age = getN('f-age');
+  const sources = parseInt(picks['f-sources']);
+  const stability = picks['f-stability'];
+  const dependents = parseInt(picks['f-dependents']);
+
+  const wealthRate = income > 0 ? (savings + investMonthly) / income : 0;
+  const emergencyMonths = expenses > 0 ? liquid / expenses : 0;
+  const efTarget = (dependents > 0 || stability === 'low' || stability === 'variable' || sources === 1) ? 6 : 3;
+  const efRatio = emergencyMonths / efTarget;
+  const dti = income > 0 ? debtPayment / income : 0;
+  const investRate = income > 0 ? investMonthly / income : 0;
+  const unallocated = income - expenses - savings - investMonthly;
+
+  return { income, annual, expenses, savings, investMonthly, liquid, investTotal, card, personal, home, other,
+    totalDebt, debtPayment, age, sources, stability, dependents,
+    wealthRate, emergencyMonths, efTarget, efRatio, dti, investRate, unallocated,
+    investType: picks['f-invest-type'], consistency: picks['f-consistency'],
+    health: picks['f-health'], life: picks['f-life'],
+    retireAge: getN('f-retire-age'), retireSpend: getN('f-retire-spend'), retirePlan: picks['f-retire-plan'], big: picks['f-big'],
+    occupation: document.getElementById('f-occupation').value, marital: picks['f-marital'] };
+}
+
+function scoreAll(m) {
+  // Income (17)
+  const base = { high:11, medium:8, low:4, variable:3 }[m.stability] || 3;
+  const srcBonus = { 1:0, 2:3, 3:5, 4:6 }[m.sources] || 0;
+  const income = Math.min(17, base + srcBonus);
+  // Savings (22) on wealthRate
+  let savings = 0; const wr = m.wealthRate;
+  if (wr >= 0.30) savings = 22; else if (wr >= 0.20) savings = 19; else if (wr >= 0.15) savings = 15;
+  else if (wr >= 0.10) savings = 10; else if (wr >= 0.05) savings = 5; else if (wr > 0) savings = 2; else savings = 0;
+  // Emergency (17) on efRatio
+  let emer = 0; const er = m.efRatio;
+  if (er >= 1) emer = 17; else if (er >= 0.75) emer = 14; else if (er >= 0.5) emer = 10; else if (er >= 0.25) emer = 6; else if (er > 0) emer = 3; else emer = 0;
+  // Debt (22) on dti + CC penalty
+  let debt = 0; const d = m.dti;
+  if (d === 0) debt = 22; else if (d <= 0.15) debt = 20; else if (d <= 0.25) debt = 16; else if (d <= 0.35) debt = 11; else if (d <= 0.50) debt = 5; else debt = 0;
+  if (m.card > 0) debt = Math.max(0, debt - 4);
+  // Investing (22)
+  let rate = 0; const ir = m.investRate;
+  if (ir >= 0.20) rate = 14; else if (ir >= 0.15) rate = 12; else if (ir >= 0.10) rate = 9; else if (ir >= 0.05) rate = 5; else if (ir > 0) rate = 2; else rate = 0;
+  let alloc = 0;
+  if (m.investType === 'safe') alloc = m.age >= 50 ? 4 : 2;
+  else if (m.investType === 'balanced') alloc = 5;
+  else if (m.investType === 'growth') alloc = m.age < 50 ? 6 : 3;
+  let consist = m.consistency === 'auto' ? 2 : (m.consistency === 'spare' ? 1 : 0);
+  const investing = Math.min(22, rate + alloc + consist);
+
+  const total = income + savings + emer + debt + investing;
+  return { income, savings, emer, debt, investing, total };
+}
+
+function determineBand(total, m) {
+  let band;
+  if (total >= 80) band = { key:'green', emoji:'🟢', label:'สุขภาพการเงินแข็งแรง', c1:'#16a34a', c2:'#15803d' };
+  else if (total >= 65) band = { key:'blue', emoji:'🔵', label:'สุขภาพการเงินดี', c1:'#2563eb', c2:'#1d4ed8' };
+  else if (total >= 45) band = { key:'amber', emoji:'🟡', label:'ควรดูแลเพิ่มเติม', c1:'#d97706', c2:'#b45309' };
+  else band = { key:'red', emoji:'🔴', label:'ต้องดูแลเร่งด่วน', c1:'#dc2626', c2:'#b91c1c' };
+  // Safety override: critical resilience problems can't read as healthy/good
+  if ((m.emergencyMonths < 1 || m.dti > 0.5) && (band.key === 'green' || band.key === 'blue')) {
+    band = { key:'amber', emoji:'🟡', label:'ควรดูแลเพิ่มเติม', c1:'#d97706', c2:'#b45309' };
+  }
+  return band;
+}
+
+function flagClass(f) { return f === 'green' ? 'flag-green' : f === 'amber' ? 'flag-amber' : 'flag-red'; }
+function flagText(f) { return f === 'green' ? 'ปกติ' : f === 'amber' ? 'เฝ้าระวัง' : 'ผิดปกติ'; }
+function flagDot(f) { return f === 'green' ? '🟢' : f === 'amber' ? '🟡' : '🔴'; }
+
+function buildVitals(m) {
+  const rows = [];
+  // Income stability (qualitative)
+  const stabLabel = { high:'มั่นคงสูง', medium:'ปานกลาง', low:'ไม่แน่นอน', variable:'ผันผวน' }[m.stability];
+  const stabFlag = (m.stability === 'high' || m.stability === 'medium') ? 'green' : 'amber';
+  rows.push({ name:'ความมั่นคงรายได้', val: stabLabel + ' (' + m.sources + ' ทาง)', ref:'มั่นคง + หลายทาง', flag: stabFlag });
+  // Wealth-building rate
+  const wf = m.wealthRate >= 0.20 ? 'green' : (m.wealthRate >= 0.10 ? 'amber' : 'red');
+  rows.push({ name:'อัตราการออม+ลงทุน', val: pctTxt(m.wealthRate), ref:'≥ 20%', flag: wf });
+  // Emergency fund
+  const ef = m.emergencyMonths >= 3 ? 'green' : (m.emergencyMonths >= 1 ? 'amber' : 'red');
+  rows.push({ name:'กองทุนฉุกเฉิน', val: m.emergencyMonths.toFixed(1) + ' เดือน', ref:'เป้า ' + m.efTarget + ' เดือน', flag: ef });
+  // DTI
+  const df = m.dti < 0.35 ? 'green' : (m.dti <= 0.50 ? 'amber' : 'red');
+  rows.push({ name:'ภาระหนี้ต่อรายได้', val: pctTxt(m.dti), ref:'< 35%', flag: df });
+  // Credit card
+  rows.push({ name:'หนี้บัตรเครดิต', val: baht(m.card), ref:'฿0', flag: m.card > 0 ? 'red' : 'green' });
+  // Investment rate
+  const inf = m.investRate >= 0.15 ? 'green' : (m.investRate >= 0.05 ? 'amber' : 'red');
+  rows.push({ name:'อัตราการลงทุน', val: pctTxt(m.investRate), ref:'≥ 15%', flag: inf });
+  return rows;
+}
+
+function buildStrengths(m, s) {
+  const out = [];
+  if (m.stability === 'high' && m.sources >= 2) out.push('รายได้มั่นคงและมีหลายแหล่ง — เป็นรากฐานที่แข็งแกร่ง');
+  else if (m.sources >= 3) out.push('กระจายแหล่งรายได้ได้ดี — ลดความเสี่ยงจากรายได้ทางเดียว');
+  if (m.wealthRate >= 0.20) out.push(`วินัยการออม+ลงทุนดีเยี่ยม — รวม ${pctTxt(m.wealthRate)} ของรายได้ สูงกว่าเกณฑ์แนะนำ 20%`);
+  if (m.card === 0) out.push('ปลอดหนี้บัตรเครดิต — หลีกเลี่ยงดอกเบี้ยที่ทำลายความมั่งคั่งเร็วที่สุด');
+  if (m.dti > 0 && m.dti <= 0.25) out.push(`ภาระหนี้อยู่ในเกณฑ์ดี — ผ่อนเพียง ${pctTxt(m.dti)} ของรายได้`);
+  else if (m.dti === 0) out.push('ปลอดหนี้ทั้งหมด — กระแสเงินสดเป็นอิสระเต็มที่');
+  if (m.emergencyMonths >= 3) out.push(`มีกองทุนฉุกเฉินเพียงพอ — ครอบคลุม ${m.emergencyMonths.toFixed(1)} เดือน`);
+  if (m.investRate >= 0.15) out.push(`ลงทุนเพื่ออนาคตสม่ำเสมอ — ${pctTxt(m.investRate)} ของรายได้`);
+  if (m.consistency === 'auto') out.push('มีวินัยลงทุนอัตโนมัติ (DCA) — กลยุทธ์ที่ได้ผลในระยะยาว');
+  if (out.length === 0) out.push('คุณเริ่มต้นใส่ใจสุขภาพการเงินแล้ว — นี่คือก้าวแรกที่สำคัญที่สุด');
+  return out.slice(0, 4);
+}
+
+function buildRisks(m, s) {
+  const out = [];
+  if (m.emergencyMonths < 3) out.push({ sev: m.emergencyMonths < 1 ? 3 : 2, t:`กองทุนฉุกเฉินยังบาง — ครอบคลุมเพียง ${m.emergencyMonths.toFixed(1)} เดือน จากเป้าหมาย ${m.efTarget} เดือน` });
+  if (m.card > 0) out.push({ sev:3, t:`มีหนี้บัตรเครดิต ${baht(m.card)} — ดอกเบี้ยสูง 16–20% ต่อปี ควรเร่งชำระ` });
+  if (m.dti > 0.35) out.push({ sev: m.dti > 0.5 ? 3 : 2, t:`ภาระหนี้สูง — ผ่อน ${pctTxt(m.dti)} ของรายได้ (เกินเกณฑ์ 35%)` });
+  if (m.wealthRate < 0.10) out.push({ sev:2, t:`อัตราการออม+ลงทุนต่ำ — เพียง ${pctTxt(m.wealthRate)} ของรายได้ (ควร ≥ 20%)` });
+  if (m.investRate < 0.15) out.push({ sev:1, t:`อัตราการลงทุนต่ำกว่าเกณฑ์ — ${pctTxt(m.investRate)} (ควร ≥ 15% เพื่อเอาชนะเงินเฟ้อ)` });
+  if ((m.stability === 'low' || m.stability === 'variable') && m.sources < 2) out.push({ sev:2, t:'รายได้ไม่แน่นอนและมาจากทางเดียว — ควรเพิ่มกองทุนฉุกเฉินและกระจายรายได้' });
+  out.sort((a,b) => b.sev - a.sev);
+  const list = out.map(x => x.t).slice(0, 4);
+  if (list.length === 0) list.push('ภาพรวมสุขภาพการเงินอยู่ในเกณฑ์ดี ควรรักษาวินัยนี้ต่อไป');
+  return list;
+}
+
+function buildPrescriptions(m, s) {
+  const cands = [];
+  // Emergency fund
+  if (m.efRatio < 1) {
+    const target = m.efTarget * m.expenses;
+    const gap = Math.max(0, target - m.liquid);
+    const fillMonthly = m.savings + Math.max(0, m.unallocated);
+    let tip = '';
+    if (gap > 0 && fillMonthly > 0) {
+      const months = Math.ceil(gap / fillMonthly);
+      if (m.unallocated > m.income * 0.05) tip = `💡 คุณมีเงินเหลือที่ยังไม่ได้จัดสรร ~${baht(m.unallocated)}/เดือน — ถ้านำมาเก็บรวมกับเงินออม จะถึงเป้าใน ~${months} เดือน`;
+      else tip = `💡 ถ้ากันเงินออม ${baht(fillMonthly)}/เดือน จะถึงเป้าใน ~${months} เดือน`;
+    }
+    cands.push({ p: (1 - m.efRatio) * 100 + 20, title:'สร้างกองทุนฉุกเฉินให้เพียงพอ',
+      body:`เป้าหมาย ${m.efTarget} เดือน = ${baht(target)} · ปัจจุบันมี ${baht(m.liquid)} (${m.emergencyMonths.toFixed(1)} เดือน) → ต้องเพิ่มอีก ${baht(gap)}`, tip });
+  }
+  // Credit card payoff
+  if (m.card > 0) {
+    cands.push({ p: 200, title:'ชำระหนี้บัตรเครดิตให้หมดก่อน',
+      body:`ยอดคงค้าง ${baht(m.card)} — ที่ดอกเบี้ย ~18% ต่อปี คุณเสียดอกเบี้ยราว ${baht(m.card*0.18)}/ปี`,
+      tip:'💡 หนี้บัตรเครดิตคือหนี้ที่ควรกำจัดเป็นอันดับแรกเสมอ ก่อนเริ่มลงทุน' });
+  }
+  // Reduce DTI
+  if (m.dti > 0.35) {
+    cands.push({ p: m.dti * 100, title:'ลดภาระหนี้ให้ต่ำกว่า 35% ของรายได้',
+      body:`ตอนนี้ผ่อน ${baht(m.debtPayment)}/เดือน (${pctTxt(m.dti)}) — พิจารณารีไฟแนนซ์ รวมหนี้ หรือเร่งปิดหนี้ดอกเบี้ยสูง`, tip:'' });
+  }
+  // Start / increase investing
+  if (m.investMonthly === 0) {
+    cands.push({ p: 90, title:'เริ่มลงทุนแม้จะเริ่มจากน้อย',
+      body:`ตั้งเป้าลงทุน 10–15% ของรายได้ = ${baht(m.income*0.10)}–${baht(m.income*0.15)}/เดือน เพื่อให้เงินทำงานแทนคุณ`,
+      tip:'💡 เริ่มจากกองทุนรวมดัชนีหรือ DCA รายเดือน เพื่อสร้างวินัย' });
+  } else if (m.investRate < 0.15) {
+    const target = m.income * 0.15, gap = Math.max(0, target - m.investMonthly);
+    cands.push({ p: (0.15 - m.investRate) * 200 + 30, title:'เพิ่มอัตราการลงทุนเป็น 15%',
+      body:`เป้าหมาย ${baht(target)}/เดือน · ตอนนี้ลงทุน ${baht(m.investMonthly)} (${pctTxt(m.investRate)}) → เพิ่มอีก ${baht(gap)}/เดือน`, tip:'' });
+  }
+  // Automate
+  if (m.investMonthly > 0 && m.consistency !== 'auto') {
+    cands.push({ p: 40, title:'เปลี่ยนเป็นลงทุนอัตโนมัติ (DCA)',
+      body:'ตั้งคำสั่งตัดบัญชีลงทุนทุกเดือนอัตโนมัติ แทนการลงทุนเมื่อมีเงินเหลือ', tip:'💡 วินัยอัตโนมัติเอาชนะอารมณ์ตลาดได้ในระยะยาว' });
+  }
+  // Increase savings
+  if (m.wealthRate < 0.20 && m.unallocated > m.income * 0.05) {
+    cands.push({ p: 50, title:'เพิ่มการออมจากเงินที่เหลืออยู่',
+      body:`คุณมีเงินเหลือ ~${baht(m.unallocated)}/เดือน ที่ยังไม่ได้จัดสรร — ตั้งระบบ "ออมก่อนใช้" เพื่อเพิ่มอัตราการออม`, tip:'' });
+  }
+  // Retirement planning
+  if (m.retirePlan === 'none' || m.retirePlan === 'vague') {
+    cands.push({ p: 35, title:'เริ่มวางแผนเกษียณให้ชัดเจน',
+      body:'กำหนดว่าต้องการใช้เงินเดือนละเท่าไรหลังเกษียณ และต้องสะสมเดือนละเท่าไรจึงจะถึงเป้า', tip:'' });
+  }
+  cands.sort((a,b) => b.p - a.p);
+  let top = cands.slice(0, 3);
+  if (top.length === 0) top = [{ title:'รักษาวินัยการเงินที่ดีนี้ต่อไป', body:'สุขภาพการเงินของคุณแข็งแรง ลองตั้งเป้าหมายระยะยาวที่ท้าทายขึ้น เช่น อิสรภาพทางการเงินก่อนเกษียณ', tip:'' }];
+  return top;
+}
+
+function buildAdvisory(m) {
+  const out = [];
+  // Health insurance
+  if (m.health === 'none') out.push({ ic:'🛡️', t:'ประกันสุขภาพ: ควรมีความคุ้มครองอย่างน้อยระดับพื้นฐาน เพื่อไม่ให้ค่ารักษาพยาบาลก้อนใหญ่กระทบเงินออมที่สะสมมา' });
+  else if (m.health === 'basic') out.push({ ic:'🛡️', t:'ประกันสุขภาพ: คุณมีความคุ้มครองพื้นฐานแล้ว หากต้องการความยืดหยุ่นมากขึ้น อาจพิจารณาประกันสุขภาพเอกชนเสริม' });
+  else out.push({ ic:'✅', t:'ประกันสุขภาพ: ความคุ้มครองของคุณอยู่ในระดับที่ดีแล้ว' });
+  // Life insurance
+  if (m.dependents > 0 && (m.life === 'none' || m.life === 'basic')) {
+    out.push({ ic:'⚠️', t:'ประกันชีวิต: เมื่อมีคนในอุปการะ ควรมีทุนคุ้มครองที่เพียงพอต่อค่าใช้จ่ายของครอบครัวหากขาดรายได้หลักไป (แนวทางทั่วไปอยู่ที่ประมาณ 10 เท่าของรายได้ทั้งปี)' });
+  } else if (m.dependents === 0 && m.marital === 'single' && (m.life === 'none' || m.life === 'basic')) {
+    out.push({ ic:'ℹ️', t:'ประกันชีวิต: เมื่อยังไม่มีคนในอุปการะ ความจำเป็นจะน้อยกว่า สามารถให้ความสำคัญกับประกันสุขภาพและการลงทุนก่อนได้' });
+  } else if (m.life === 'adequate' || m.life === 'full') {
+    out.push({ ic:'✅', t:'ประกันชีวิต: ทุนคุ้มครองของคุณอยู่ในระดับที่เหมาะสมแล้ว' });
+  } else {
+    out.push({ ic:'🛡️', t:'ประกันชีวิต: ลองทบทวนว่าทุนคุ้มครองเพียงพอกับภาระและคนข้างหลังของคุณหรือยัง' });
+  }
+  // Retirement — nest egg from ESTIMATED future spending, not today's
+  const years = Math.max(0, m.retireAge - m.age);
+  const retireMonthly = m.retireSpend;
+  const nest = retireMonthly * 12 * 25;
+  let rt = `การเกษียณ: ตั้งเป้าเกษียณอายุ ${m.retireAge} (อีกประมาณ ${years} ปี) · จากค่าใช้จ่ายหลังเกษียณที่คุณคาดไว้ ~${baht(retireMonthly)}/เดือน แนวทาง "กฎ 4%" คุณควรมีเงินก้อนราว ${baht(nest)} (ค่าใช้จ่ายปี × 25) · ปัจจุบันมีเงินลงทุน ${baht(m.investTotal)} — ตัวเลขนี้ยังไม่รวมบำนาญ กบข./ประกันสังคม ซึ่งจะช่วยลดจำนวนที่ต้องเตรียมเอง`;
+  if (m.retirePlan === 'none' || m.retirePlan === 'vague') rt += ' แนะนำให้เริ่มวางแผนอย่างเป็นรูปธรรม';
+  out.push({ ic:'🎯', t: rt });
+  // Big expense
+  if (m.big === 'unprepared') out.push({ ic:'📌', t:'เป้าหมายระยะใกล้: สำหรับค่าใช้จ่ายก้อนใหญ่ที่วางแผนไว้ ควรทยอยกันเงินไว้ในบัญชีแยกต่างหาก เพื่อไม่ให้กระทบเงินสำรองฉุกเฉินหรือการลงทุน' });
+  return out;
+}
+
+function buildSummary(m, s, band) {
+  const occ = { doctor:'ในฐานะแพทย์ ', nurse:'ในฐานะบุคลากรสาธารณสุข ', govt:'ในฐานะข้าราชการ ' }[m.occupation] || '';
+  let p = '';
+  if (band.key === 'green') p = 'ผลการตรวจสุขภาพการเงินของคุณอยู่ในระดับแข็งแรง ';
+  else if (band.key === 'blue') p = 'ผลการตรวจสุขภาพการเงินของคุณอยู่ในเกณฑ์ดี ';
+  else if (band.key === 'amber') p = 'ผลการตรวจพบว่าสุขภาพการเงินของคุณยังมีหลายจุดที่ควรดูแลเพิ่มเติม ';
+  else p = 'ผลการตรวจพบว่าสุขภาพการเงินของคุณมีความเสี่ยงที่ควรเร่งดูแล ';
+
+  if (occ && (m.stability === 'high')) p += occ + 'คุณมีความมั่นคงด้านรายได้ที่ดีกว่าคนทั่วไป ซึ่งเป็นข้อได้เปรียบที่ไม่ควรมองข้าม ';
+
+  p += `อัตราการออมและลงทุนรวมของคุณอยู่ที่ ${pctTxt(m.wealthRate)} `;
+  if (m.wealthRate >= 0.20) p += 'ซึ่งน่าชื่นชมมาก ';
+  else if (m.wealthRate >= 0.10) p += 'ซึ่งพอใช้ได้ และยังมีโอกาสเพิ่มได้อีก ';
+  else p += 'ซึ่งยังต่ำกว่าเกณฑ์ ควรหาทางเพิ่มขึ้น ';
+
+  if (m.card > 0) p += `จุดที่ต้องรีบจัดการคือหนี้บัตรเครดิต ${baht(m.card)} ที่ดอกเบี้ยสูง `;
+  if (m.emergencyMonths < 3) p += `และกองทุนฉุกเฉินที่ยังครอบคลุมเพียง ${m.emergencyMonths.toFixed(1)} เดือน `;
+
+  if (m.unallocated > m.income * 0.05 && (m.emergencyMonths < 3 || m.investRate < 0.15)) {
+    p += `ข่าวดีคือคุณมีเงินเหลือราว ${baht(m.unallocated)} ต่อเดือนที่นำมาแก้จุดเหล่านี้ได้ทันที `;
+  }
+
+  if (band.key === 'green' || band.key === 'blue') p += 'โดยรวมถือว่าคุณดูแลสุขภาพการเงินได้ดี ขอเป็นกำลังใจให้รักษาวินัยนี้และพัฒนาต่อไปครับ';
+  else p += 'ขอให้มองผลนี้เป็นจุดเริ่มต้น ไม่ใช่คำตัดสิน ทุกอย่างปรับให้ดีขึ้นได้ด้วยแผนที่ชัดเจนและวินัยที่สม่ำเสมอครับ';
+  return p;
+}
+
+function showResults() {
+  document.getElementById('form-area').style.display = 'none';
+  document.getElementById('results').style.display = 'block';
+  window.scrollTo(0, 0);
+
+  const m = computeMetrics();
+  const s = scoreAll(m);
+  const band = determineBand(s.total, m);
+
+  // Band card
+  const bc = document.getElementById('band-card');
+  bc.style.background = `linear-gradient(135deg, ${band.c1}, ${band.c2})`;
+  document.getElementById('band-emoji').textContent = band.emoji;
+  document.getElementById('band-label').textContent = band.label;
+  const greens = buildVitals(m).filter(v => v.flag === 'green').length;
+  const issues = buildVitals(m).filter(v => v.flag !== 'green').length;
+  let verdict = '';
+  if (band.key === 'green') verdict = 'รากฐานการเงินแข็งแรงรอบด้าน รักษาวินัยที่ดีนี้ไว้';
+  else if (band.key === 'blue') verdict = `มีรากฐานที่ดีและวินัยการเงินที่ดี เหลือเพียง ${issues} จุดที่ควรเสริมให้แข็งแรงขึ้น`;
+  else if (band.key === 'amber') verdict = `มีจุดแข็งอยู่บ้าง แต่ยังมี ${issues} จุดสำคัญที่ควรดูแล เริ่มจากใบสั่งแพทย์ด้านล่าง`;
+  else verdict = 'มีหลายจุดที่ต้องเร่งดูแล แต่ทุกอย่างแก้ไขได้ เริ่มทีละขั้นตามใบสั่งแพทย์ด้านล่าง';
+  document.getElementById('band-verdict').textContent = verdict;
+
+  // Consistency note
+  const note = document.getElementById('note-box');
+  if (m.unallocated < -m.income * 0.03) {
+    note.style.display = 'block';
+    note.textContent = '⚠️ ตัวเลขรายได้ รายจ่าย เงินออม และการลงทุนของคุณอาจไม่สอดคล้องกัน (รวมแล้วเกินรายได้) ลองตรวจสอบอีกครั้งเพื่อผลที่แม่นยำขึ้น';
+  } else note.style.display = 'none';
+
+  // Vitals
+  const vitalsEl = document.getElementById('vitals');
+  vitalsEl.innerHTML = buildVitals(m).map(v => `
+    <div class="vital">
+      <span class="vital-name">${v.name}</span>
+      <span class="vital-val">${v.val}</span>
+      <span class="vital-ref">${v.ref}</span>
+      <span class="vital-flag ${flagClass(v.flag)}">${flagDot(v.flag)} ${flagText(v.flag)}</span>
+    </div>`).join('');
+
+  // Strengths / Risks
+  document.getElementById('strengths').innerHTML = buildStrengths(m, s).map(t => `<li class="good"><span class="ic">✅</span><span>${t}</span></li>`).join('');
+  document.getElementById('risks').innerHTML = buildRisks(m, s).map(t => `<li class="warn"><span class="ic">⚠️</span><span>${t}</span></li>`).join('');
+
+  // Prescriptions
+  document.getElementById('prescriptions').innerHTML = buildPrescriptions(m, s).map((rx, i) => `
+    <div class="rx">
+      <div class="rx-title"><span class="rx-num">${i+1}</span><span>${rx.title}</span></div>
+      <div class="rx-body">${rx.body}</div>
+      ${rx.tip ? `<div class="rx-tip">${rx.tip}</div>` : ''}
+    </div>`).join('');
+
+  // Advisory
+  document.getElementById('advisory').innerHTML = buildAdvisory(m).map(a => `<div class="adv"><span class="ic">${a.ic}</span><span>${a.t}</span></div>`).join('');
+
+  // Summary
+  document.getElementById('summary').textContent = buildSummary(m, s, band);
+}
+
+function startCheckup() {
+  document.getElementById('intro').style.display = 'none';
+  document.getElementById('form-area').style.display = 'block';
+  window.scrollTo(0, 0);
+}
+
+function restart() {
+  currentStep = 1;
+  document.querySelectorAll('.step').forEach((el, i) => el.style.display = i === 0 ? 'block' : 'none');
+  document.querySelectorAll('input[type="number"], select').forEach(el => el.value = '');
+  document.querySelectorAll('.option-card').forEach(el => el.classList.remove('selected'));
+  for (const k in picks) delete picks[k];
+  document.getElementById('results').style.display = 'none';
+  document.getElementById('form-area').style.display = 'none';
+  document.getElementById('intro').style.display = 'block';
+  updateProgress(); showErr(''); window.scrollTo(0, 0);
+}
+
+// Allow comma-formatted entry on money fields (e.g. 120,000) — keeps a numeric keypad on mobile
+['f-income','f-expenses','f-savings','f-liquid','f-invest-total','f-debt-card','f-debt-personal','f-debt-home','f-debt-other','f-debt-payment','f-invest-monthly','f-retire-spend'].forEach(id => {
+  const el = document.getElementById(id);
+  if (!el) return;
+  el.type = 'text';
+  el.setAttribute('inputmode', 'numeric');
+  el.addEventListener('input', () => {
+    const digits = el.value.replace(/[^\d]/g, '');
+    el.value = digits === '' ? '' : parseInt(digits, 10).toLocaleString('en-US');
+  });
+});
+
+updateProgress();
+</script>
+</body>
+</html>
