@@ -766,6 +766,13 @@ function showResults() {
   document.getElementById('results').style.display = 'block';
   window.scrollTo(0, 0);
 
+  // Count a "quiz completed" event in GoatCounter (separate from pageviews).
+  // Fires once per visit, only if the analytics script has loaded.
+  if (!window._mhCompleted && window.goatcounter && typeof window.goatcounter.count === 'function') {
+    window._mhCompleted = true;
+    window.goatcounter.count({ path: 'quiz-completed', title: 'Quiz Completed', event: true });
+  }
+
   const m = computeMetrics();
   const s = scoreAll(m);
   const band = determineBand(s.total, m);
